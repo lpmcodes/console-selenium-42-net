@@ -38,4 +38,29 @@ public sealed class BuscaDesafioTest
         Assert.IsTrue(tituloContemTermo || urlContemTermo,
             $"Esperava o termo '{termo}' no título ou na URL. Título: '{resultados.Titulo}' | URL: '{resultados.Url}'");
     }
+
+    // Exercício 2: Interagindo com o Autocompletar (Suggestions)
+    [TestMethod]
+    [TestCategory("Exercicio2")]
+    public void Exercicio2_Autocompletar_TerceiraSugestaoAbreResultados()
+    {
+        const string termo = "C# unit testing";
+        const int terceiraOpcao = 3;
+
+        var home = new DuckDuckGoHomePage(_driver)
+            .Abrir()
+            .Digitar(termo); // sem Enter
+
+        var sugestoes = home.AguardarSugestoes(quantidadeMinima: terceiraOpcao);
+        Assert.IsGreaterThanOrEqualTo(terceiraOpcao, sugestoes.Count, "A lista de sugestões não exibiu ao menos 3 opções.");
+
+        var sugestaoEscolhida = home.ClicarSugestao(terceiraOpcao);
+
+        var resultados = new DuckDuckGoResultsPage(_driver).AguardarCarregar();
+
+        Assert.AreEqual(
+            UrlHelper.Normalizar(sugestaoEscolhida),
+            UrlHelper.Normalizar(resultados.TermoPesquisado),
+            $"A busca aberta não corresponde à sugestão clicada. URL: '{resultados.Url}'");
+    }
 }
