@@ -63,4 +63,50 @@ public sealed class BuscaDesafioTest
             UrlHelper.Normalizar(resultados.TermoPesquisado),
             $"A busca aberta não corresponde à sugestão clicada. URL: '{resultados.Url}'");
     }
+
+    // Exercício 3: Navegação por Histórico e Botões de Ação
+    [TestMethod]
+    [TestCategory("Exercicio3")]
+    public void Exercicio3_NavegacaoHistorico_VoltarRestauraResultados()
+    {
+        const string termo = "Automated Testing";
+
+        // 1. Busca inicial
+        var resultados = new DuckDuckGoHomePage(_driver)
+            .Abrir()
+            .Pesquisar(termo)
+            .AguardarResultados();
+
+        // 2. Clica no primeiro resultado orgânico
+        resultados.ClicarPrimeiroResultadoOrganico();
+
+        // 3. Valida a página externa pela URL atual
+        new PaginaExterna(_driver).AguardarCarregar();
+        var urlExterna = _driver.Url;
+
+        Assert.IsTrue(UrlHelper.EhUrlWebValida(urlExterna), $"URL externa inválida: '{urlExterna}'");
+        Assert.IsFalse(UrlHelper.EhDominio(urlExterna, "duckduckgo.com"),
+            $"O navegador deveria ter saído do DuckDuckGo. URL atual: '{urlExterna}'");
+
+        // 4. Volta para a página de resultados
+        _driver.Navigate().Back();
+
+        // 5. Valida que os resultados foram restaurados
+        var restaurada = new DuckDuckGoResultsPage(_driver)
+            .AguardarCarregar()
+            .AguardarResultados();
+
+        Assert.IsTrue(UrlHelper.EhDominio(restaurada.Url, "duckduckgo.com"),
+            $"Deveria ter voltado ao DuckDuckGo. URL atual: '{restaurada.Url}'");
+        Assert.AreEqual(UrlHelper.Normalizar(termo), UrlHelper.Normalizar(restaurada.TermoPesquisado),
+            "O termo da busca não foi preservado ao voltar.");
+        Assert.IsGreaterThan(0, restaurada.QuantidadeResultados, "A lista de resultados não foi restaurada.");
+
+        // Extra: botão Avançar leva de volta ao site externo
+        _driver.Navigate().Forward();
+        new PaginaExterna(_driver).AguardarCarregar();
+
+        Assert.IsFalse(UrlHelper.EhDominio(_driver.Url, "duckduckgo.com"),
+            "O botão Avançar deveria reabrir a página externa.");
+    }
 }
